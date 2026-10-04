@@ -22,6 +22,7 @@ export const studio: Template = {
     const fr = fitFrame(device, orientation, W * 0.7, H * 0.56, W / 2, H * 0.36);
     const real = frameGeometry(device, fr.x, fr.y, fr.w, fr.h, orientation);
     const shot = screenImage(real, shotPng);
+    const layers = frameSvg(device, real);
     const bg = colors.background[0] ?? '#f5f7fa';
     const ink = colors.text;
 
@@ -35,8 +36,9 @@ export const studio: Template = {
   ${caption.subtext ? `<text x="${round2(W / 2)}" y="${round2(H * 0.13 + m.headline.sizePx * 1.5)}" text-anchor="middle" font-family="${esc(fontFamily)}" font-size="${round2(m.subtext.sizePx)}" fill="${ink}" opacity="0.75">${esc(caption.subtext)}</text>` : ''}
   <ellipse cx="${round2(W / 2)}" cy="${round2(real.y + real.h + H * 0.015)}" rx="${round2(real.w * 0.52)}" ry="${round2(H * 0.012)}" fill="#000000" opacity="0.18" filter="url(#floor)"/>
   <g>
-    ${frameSvg(device, real)}
+    ${layers.below}
     ${shot.body}
+    ${layers.above}
   </g>
 </svg>`;
   },

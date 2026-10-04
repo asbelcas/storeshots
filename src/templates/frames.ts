@@ -68,9 +68,21 @@ export function frameGeometry(
   };
 }
 
-/** Bezel + ornamentation SVG group. The caller embeds the screenshot into geo.screen. */
-export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
+/**
+ * Layered frame rendering: `below` = bezel body + screen cutout (drawn BEFORE
+ * the screenshot), `above` = ornaments (drawn AFTER, on top of the screenshot)
+ * plus the bezel stroke (drawn last so the screenshot never covers the rim).
+ * The caller inlines the clipped screenshot image between the two groups.
+ */
+export interface FrameLayers {
+  below: string;
+  above: string;
+}
+
+/** Bezel + ornamentation SVG groups. The caller embeds the screenshot between them. */
+export function frameSvg(device: DeviceSpec, geo: FrameGeometry): FrameLayers {
   const parts: string[] = [];
+  const ornaments: string[] = [];
   const { x, y, w, h, radius, bezel, orientation } = geo;
   const s = geo.screen;
   const portrait = orientation === 'portrait';
@@ -78,7 +90,7 @@ export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
 
   // body
   parts.push(
-    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="#0d0d10" stroke="#34343c" stroke-width="${round2(Math.max(bezel * 0.16, 1.5))}"/>`,
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="#0d0d10"/>`,
   );
   // screen cutout (opaque; screenshot is drawn on top by the caller)
   parts.push(`<rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="${s.r}" fill="#000000"/>`);
@@ -89,7 +101,7 @@ export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
     const ph = Math.max(Math.min(w, h) * 0.011, 6);
     const ix = portrait ? s.x + (s.w - pw) / 2 : s.x + h * 0.014;
     const iy = portrait ? s.y + h * 0.014 : s.y + (s.h - pw) / 2;
-    parts.push(
+    ornaments.push(
       portrait
         ? `<rect x="${round2(ix)}" y="${round2(iy)}" width="${round2(pw)}" height="${round2(ph)}" rx="${round2(ph / 2)}" fill="#0d0d10"/>`
         : `<rect x="${round2(ix)}" y="${round2(iy)}" width="${round2(ph)}" height="${round2(pw)}" rx="${round2(ph / 2)}" fill="#0d0d10"/>`,
@@ -99,7 +111,7 @@ export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
     const ih = Math.max(Math.min(w, h) * 0.006, 4);
     const hx = portrait ? s.x + (s.w - iw) / 2 : s.x + s.w - Math.min(w, h) * 0.02 - ih;
     const hy = portrait ? s.y + s.h - Math.min(w, h) * 0.02 - ih : s.y + (s.h - iw) / 2;
-    parts.push(
+    ornaments.push(
       portrait
         ? `<rect x="${round2(hx)}" y="${round2(hy)}" width="${round2(iw)}" height="${round2(ih)}" rx="${round2(ih / 2)}" fill="#3a3a42"/>`
         : `<rect x="${round2(hx)}" y="${round2(hy)}" width="${round2(ih)}" height="${round2(iw)}" rx="${round2(ih / 2)}" fill="#3a3a42"/>`,
@@ -109,7 +121,7 @@ export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
     const cr = bezel * 0.42;
     const cx = portrait ? x + w / 2 : x + w - bezel / 2;
     const cy = portrait ? y + h - bezel / 2 : y + h / 2;
-    parts.push(
+    ornaments.push(
       `<circle cx="${round2(cx)}" cy="${round2(cy)}" r="${round2(cr)}" fill="none" stroke="#34343c" stroke-width="${round2(Math.max(bezel * 0.1, 2))}"/>`,
     );
   } else if (device.id === 'ipad13') {
@@ -117,7 +129,7 @@ export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
     const ih = Math.max(Math.min(w, h) * 0.005, 4);
     const hx = portrait ? s.x + (s.w - iw) / 2 : s.x + s.w - Math.min(w, h) * 0.018 - ih;
     const hy = portrait ? s.y + s.h - Math.min(w, h) * 0.018 - ih : s.y + (s.h - iw) / 2;
-    parts.push(
+    ornaments.push(
       portrait
         ? `<rect x="${round2(hx)}" y="${round2(hy)}" width="${round2(iw)}" height="${round2(ih)}" rx="${round2(ih / 2)}" fill="#3a3a42"/>`
         : `<rect x="${round2(hx)}" y="${round2(hy)}" width="${round2(ih)}" height="${round2(iw)}" rx="${round2(ih / 2)}" fill="#3a3a42"/>`,
@@ -127,16 +139,25 @@ export function frameSvg(device: DeviceSpec, geo: FrameGeometry): string {
     const pr = Math.max(Math.min(w, h) * 0.012, 5);
     const px = portrait ? s.x + s.w / 2 : s.x + Math.min(w, h) * 0.018 + pr;
     const py = portrait ? s.y + Math.min(w, h) * 0.018 + pr : s.y + s.h / 2;
-    parts.push(`<circle cx="${round2(px)}" cy="${round2(py)}" r="${round2(pr)}" fill="#0d0d10" stroke="#26262c" stroke-width="1.5"/>`);
+    ornaments.push(`<circle cx="${round2(px)}" cy="${round2(py)}" r="${round2(pr)}" fill="#0d0d10" stroke="#26262c" stroke-width="1.5"/>`);
     const nw = sw * 0.2;
     const nh = Math.max(Math.min(w, h) * 0.006, 4);
     const nx = portrait ? s.x + (s.w - nw) / 2 : s.x + s.w - Math.min(w, h) * 0.02 - nh;
     const ny = portrait ? s.y + s.h - Math.min(w, h) * 0.02 - nh : s.y + (s.h - nw) / 2;
-    parts.push(
+    ornaments.push(
       portrait
         ? `<rect x="${round2(nx)}" y="${round2(ny)}" width="${round2(nw)}" height="${round2(nh)}" rx="${round2(nh / 2)}" fill="#3a3a42"/>`
         : `<rect x="${round2(nx)}" y="${round2(ny)}" width="${round2(nh)}" height="${round2(nw)}" rx="${round2(nh / 2)}" fill="#3a3a42"/>`,
     );
   }
-  return parts.join('\n    ');
+
+  // rim stroke on top of everything
+  ornaments.push(
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="none" stroke="#34343c" stroke-width="${round2(Math.max(bezel * 0.16, 1.5))}"/>`,
+  );
+
+  return {
+    below: parts.join('\n    '),
+    above: ornaments.join('\n    '),
+  };
 }

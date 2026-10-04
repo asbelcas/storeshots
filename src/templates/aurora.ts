@@ -22,6 +22,7 @@ export const aurora: Template = {
     const fr = fitFrame(device, orientation, W * 0.74, H * 0.58, W / 2, H * 0.34);
     const real = frameGeometry(device, fr.x, fr.y, fr.w, fr.h, orientation);
     const shot = screenImage(real, shotPng);
+    const layers = frameSvg(device, real);
     const glowR = W * 0.55;
 
     return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
@@ -34,8 +35,9 @@ export const aurora: Template = {
   <text x="${round2(W * 0.09)}" y="${round2(H * 0.155)}" font-family="${esc(fontFamily)}" font-weight="bold" font-size="${round2(m.headline.sizePx)}" fill="${colors.text}">${esc(caption.headline)}</text>
   ${caption.subtext ? `<text x="${round2(W * 0.09)}" y="${round2(H * 0.155 + m.headline.sizePx * 1.55)}" font-family="${esc(fontFamily)}" font-size="${round2(m.subtext.sizePx)}" fill="${colors.text}" opacity="0.82">${esc(caption.subtext)}</text>` : ''}
   <g>
-    ${frameSvg(device, real)}
+    ${layers.below}
     ${shot.body}
+    ${layers.above}
   </g>
 </svg>`;
   },
