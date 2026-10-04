@@ -1,0 +1,12 @@
+# Demo build: 2 device classes x 2 locales x 3 screens = 12 screenshots.
+# Paths resolve relative to this config file's directory.
+template: aurora
+orientation: portrait
+devices: [iphone69, android-phone]
+locales: [en, de]
+input: ./input
+out: ./output
+colors:
+  background: ["#0b1f3a", "#143d66"]
+  text: "#ffffff"
+  accent: "#5ac8fa"

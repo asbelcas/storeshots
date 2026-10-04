@@ -1,0 +1,7 @@
+{
+  "screens": {
+    "home": { "headline": "Build habits that stick", "subtext": "One simple list for your day." },
+    "stats": { "headline": "See real progress", "subtext": "Streaks and trends at a glance." },
+    "settings": { "headline": "Yours, privately", "subtext": "Local-first. No account." }
+  }
+}

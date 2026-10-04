@@ -1,0 +1,7 @@
+{
+  "screens": {
+    "home": { "headline": "Gewohnheiten, die bleiben", "subtext": "Eine einfache Liste für den Tag." },
+    "stats": { "headline": "Echte Fortschritte sehen", "subtext": "Serien und Trends auf einen Blick." },
+    "settings": { "headline": "Deine Daten bleiben privat und sicher, nur auf deinem eigenen Gerät", "subtext": "Lokal zuerst. Kein Konto." }
+  }
+}

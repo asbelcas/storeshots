@@ -1,0 +1,7 @@
+{
+  "screens": {
+    "home": { "headline": "Hábitos que perduran", "subtext": "Una lista simple para tu día." },
+    "stats": { "headline": "Progreso real", "subtext": "Rachas y tendencias de un vistazo." },
+    "settings": { "headline": "Tuyo, en privado", "subtext": "Local primero. Sin cuenta." }
+  }
+}
