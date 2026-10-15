@@ -24,7 +24,7 @@ export interface DeviceSpec {
   note?: string;
 }
 
-export const SPEC_VERSION = '2026-10';
+export const SPEC_VERSION = '2026-10-15';
 
 export const DEVICES: DeviceSpec[] = [
   {
@@ -70,17 +70,16 @@ export const DEVICES: DeviceSpec[] = [
     width: 1080,
     height: 1920,
     required: true,
-    note: 'Google Play accepts any side 320-3840 px; 1080x1920 is the documented recommendation. Need >= 2 screenshots.',
+    note: 'Google Play general rule (verified 2026-10-15): min side 320 px, max side 3840 px, max no more than 2x the min. 1080x1920 satisfies the 9:16-portrait recommendation (>=4 shots at >=1080px) for featuring eligibility.',
   },
   {
     id: 'android-tablet',
-    label: 'Android tablet (recommended size)',
+    label: 'Android tablet (large screens: tablet/Chromebook slot)',
     store: 'googleplay',
-    width: 1200,
+    width: 1080,
     height: 1920,
     required: false,
-    verify: true,
-    note: 'VERIFY-BEFORE-LAUNCH: Play has no mandated tablet size (min short side 1080 px for featuring). 1200x1920 is a common 16:10 tablet canvas.',
+    note: 'Google Play large-screens spec (verified 2026-10-15): 9:16 portrait / 16:9 landscape, sides 1080-7680 px, minimum 4 screenshots for the tablet slot. Earlier 1200x1920 (5:8) canvas was off-spec and was corrected.',
   },
 ];
 

@@ -1,6 +1,6 @@
 {
   "name": "storeshots",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Turn raw app screenshots into store-ready App Store + Google Play sets from a YAML config. Offline, CI-friendly, deterministic.",
   "type": "module",
   "license": "FSL-1.1-MIT",

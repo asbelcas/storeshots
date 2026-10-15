@@ -8,7 +8,7 @@ const EXPECTED = {
   iphone55: [1242, 2208],
   ipad13: [2064, 2752],
   'android-phone': [1080, 1920],
-  'android-tablet': [1200, 1920],
+  'android-tablet': [1080, 1920],
 };
 
 test('spec table is internally consistent', () => {
@@ -54,7 +54,10 @@ test('device ids are unique and getDevice throws on unknown', () => {
   assert.throws(() => getDevice('nokia-3310'), /Unknown device id/);
 });
 
-test('android-tablet is flagged verify-before-launch', () => {
-  assert.equal(getDevice('android-tablet').verify, true);
+test('android-tablet was re-verified against Play large-screens spec 2026-10-15', () => {
+  const t = getDevice('android-tablet');
+  assert.equal(t.verify, undefined);
+  assert.equal(t.width, 1080);
+  assert.equal(t.height, 1920);
   assert.equal(getDevice('iphone69').verify, undefined);
 });
