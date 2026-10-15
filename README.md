@@ -1,8 +1,12 @@
 # storeshots
 
+![version](https://img.shields.io/badge/version-1.0.0-blue) ![tests](https://img.shields.io/badge/tests-55%2F55-brightgreen) ![license](https://img.shields.io/badge/license-FSL--1.1-green)
+
 **Test:** `npm install && npm test` — builds the TypeScript and runs the full suite (spec integrity, config parsing + error cases, per-template render dimensions, i18n overflow, license hook, end-to-end CLI integration). Must exit 0.
 
 **Demo:** `npm run demo` — generates synthetic raw screenshots, then renders a real set: 2 device classes × 2 locales × 3 screens = 12 PNGs into `examples/output/`.
+
+![storeshots demo](docs/demo.gif)
 
 Turn raw app screenshots into store-ready App Store + Google Play sets from one YAML config. Offline, deterministic, CI-friendly.
 
