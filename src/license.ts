@@ -1,11 +1,11 @@
 /**
  * License-key hook (v1).
  *
- * v1 ships WITHOUT any real network validation wired in: the CLI only checks a
- * license when `--license-key` is passed, and the default "live" mode throws a
- * clear "not wired yet" error. Wiring the real Lemon Squeezy (or Gumroad)
- * endpoint happens AFTER the human owner creates the seller account — see the
- * handoff list in README.md.
+ * v1 ships WITHOUT enforcement by default: the CLI only checks a license when
+ * `--license-key` is passed. Live providers are implemented (lemonsqueezy,
+ * gumroad) but require the owner's seller account details (endpoint / product
+ * id) — see the handoff list in README.md. v1.1 turns enforcement on by
+ * default; the sales copy discloses this timeline.
  *
  * The `fake` mode exists purely for tests and CI: a deterministic local
  * checksum format (SS1-XXXX-XXXX-XXXX) so the check can be exercised with
@@ -19,8 +19,13 @@ export interface LicenseResult {
 
 export interface LicenseOptions {
   mode: 'fake' | 'live';
-  /** Required in live mode, e.g. https://api.lemonsqueezy.com/v1/licenses */
+  /** Required in live mode for lemonsqueezy, e.g. https://api.lemonsqueezy.com/v1/licenses */
   endpoint?: string;
+  /** Live validation provider. lemonsqueezy = POST <endpoint>/validate {license_key}.
+   *  gumroad = POST https://api.gumroad.com/v2/licenses/verify (endpoint override for tests). */
+  provider?: 'lemonsqueezy' | 'gumroad';
+  /** gumroad only: your product id or permalink (required in gumroad live mode). */
+  productId?: string;
   /** Injectable transport (tests pass a stub; never hit the network). */
   fetcher?: (url: string, init?: Record<string, unknown>) => Promise<{ ok: boolean; json: () => Promise<unknown> }>;
 }
@@ -51,12 +56,44 @@ export async function validateLicense(key: string, opts: LicenseOptions): Promis
       : { valid: false, detail: 'fake mode: checksum mismatch (tampered or mistyped key)' };
   }
 
-  // live mode — intentionally NOT functional in v1 until the owner account exists.
+  // live mode
+  const provider = opts.provider ?? 'lemonsqueezy';
+  if (provider === 'gumroad') {
+    if (!opts.productId) {
+      throw new Error(
+        'Gumroad live validation requires --license-product-id (your Gumroad product id or permalink). ' +
+          'Keys are verified against api.gumroad.com/v2/licenses/verify.',
+      );
+    }
+    const base = (opts.endpoint ?? 'https://api.gumroad.com').replace(/\/$/, '');
+    const fetcher = opts.fetcher ?? (globalThis.fetch as unknown as LicenseOptions['fetcher']);
+    if (!fetcher) throw new Error('No fetch implementation available for live license validation');
+    const res = await fetcher(`${base}/v2/licenses/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ product_id: opts.productId, license_key: key }).toString(),
+    });
+    if (!res.ok) return { valid: false, detail: 'gumroad verify request failed (non-2xx)' };
+    const data = (await res.json()) as {
+      success?: boolean;
+      message?: string;
+      purchase?: { product_name?: string; email?: string; refunded?: boolean; disputed?: boolean };
+    };
+    const p = data.purchase;
+    if (data.success === true && p && !p.refunded && !p.disputed) {
+      return {
+        valid: true,
+        detail: `gumroad: valid purchase of "${p.product_name ?? 'product'}" (${p.email ?? 'buyer email hidden'})`,
+      };
+    }
+    return { valid: false, detail: `gumroad: ${data.message ?? 'license invalid or purchase refunded/disputed'}` };
+  }
+
   if (!opts.endpoint) {
     throw new Error(
       'Live license validation is not wired yet: no endpoint configured. ' +
-        'The human owner must create the Lemon Squeezy account, then set --license-endpoint ' +
-        '(see README handoff list). No real validation happens in v1 builds.',
+        'The human owner must create the seller account, then set --license-endpoint ' +
+        '(Lemon Squeezy) or --license-provider gumroad --license-product-id <id>.',
     );
   }
   const fetcher = opts.fetcher ?? (globalThis.fetch as unknown as LicenseOptions['fetcher']);

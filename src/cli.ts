@@ -13,6 +13,8 @@ interface Args {
   licenseKey?: string;
   licenseMode: 'fake' | 'live';
   licenseEndpoint?: string;
+  licenseProvider?: 'lemonsqueezy' | 'gumroad';
+  licenseProductId?: string;
 }
 
 function usage(): string {
@@ -20,7 +22,9 @@ function usage(): string {
 
 Usage:
   storeshots build --config <file.yaml> [--out <dir>] [--verbose]
-                   [--license-key K] [--license-mode fake|live] [--license-endpoint URL]
+                   [--license-key K] [--license-mode fake|live]
+                   [--license-provider lemonsqueezy|gumroad] [--license-endpoint URL]
+                   [--license-product-id ID]
 
 Options:
   --config          Path to YAML build config (required)
@@ -28,8 +32,11 @@ Options:
   --verbose         Log every rendered file
   --license-key     Validate a license key before building (optional in v1)
   --license-mode    fake = deterministic local self-check (tests/CI only);
-                    live = real endpoint (NOT wired in v1 — see README handoff)
-  --license-endpoint License server base URL (live mode only)
+                    live = real endpoint (requires the provider flags below)
+  --license-provider lemonsqueezy (default; needs --license-endpoint) or
+                    gumroad (needs --license-product-id; endpoint is api.gumroad.com)
+  --license-endpoint License server base URL (lemonsqueezy live mode)
+  --license-product-id Gumroad product id or permalink (gumroad live mode)
   --help            Show this help
 `;
 }
@@ -62,6 +69,12 @@ function parseArgs(argv: string[]): Args {
         break;
       case '--license-endpoint':
         args.licenseEndpoint = rest.shift();
+        break;
+      case '--license-provider':
+        args.licenseProvider = rest.shift() as 'lemonsqueezy' | 'gumroad';
+        break;
+      case '--license-product-id':
+        args.licenseProductId = rest.shift();
         break;
       default:
         throw new Error(`Unknown argument: ${a}`);
@@ -99,6 +112,8 @@ async function main(): Promise<number> {
       const res = await validateLicense(args.licenseKey, {
         mode: args.licenseMode,
         endpoint: args.licenseEndpoint,
+        provider: args.licenseProvider,
+        productId: args.licenseProductId,
       });
       if (!res.valid) {
         console.error(`License check failed: ${res.detail}`);

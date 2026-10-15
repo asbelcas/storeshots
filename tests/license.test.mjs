@@ -42,3 +42,42 @@ test('live mode uses the injected transport with a Lemon-Squeezy-style shape (st
   assert.equal(calls[0].init.method, 'POST');
   assert.match(calls[0].init.body, /KEY-123/);
 });
+
+test('gumroad live: valid purchase verifies (stub, no network)', async () => {
+  const calls = [];
+  const stub = async (url, init) => {
+    calls.push({ url, init });
+    return { ok: true, json: async () => ({ success: true, purchase: { product_name: 'storeshots', email: 'buyer@example.com', refunded: false } }) };
+  };
+  const res = await validateLicense('GR-KEY-1', {
+    mode: 'live',
+    provider: 'gumroad',
+    productId: 'storeshots',
+    fetcher: stub,
+  });
+  assert.equal(res.valid, true);
+  assert.match(res.detail, /storeshots/);
+  assert.equal(calls[0].url, 'https://api.gumroad.com/v2/licenses/verify');
+  assert.match(calls[0].init.body, /license_key=GR-KEY-1/);
+  assert.match(calls[0].init.body, /product_id=storeshots/);
+});
+
+test('gumroad live: failed/refunded purchase is rejected', async () => {
+  const stub = async () => ({ ok: true, json: async () => ({ success: false, message: 'That license key does not exist' }) });
+  const res = await validateLicense('BAD-KEY', { mode: 'live', provider: 'gumroad', productId: 'storeshots', fetcher: stub });
+  assert.equal(res.valid, false);
+  assert.match(res.detail, /does not exist/);
+});
+
+test('gumroad live: refunded purchase flagged in payload is rejected', async () => {
+  const stub = async () => ({ ok: true, json: async () => ({ success: true, purchase: { product_name: 'x', refunded: true } }) });
+  const res = await validateLicense('GR-KEY-2', { mode: 'live', provider: 'gumroad', productId: 'x', fetcher: stub });
+  assert.equal(res.valid, false);
+});
+
+test('gumroad live: missing product id throws a clear error', async () => {
+  await assert.rejects(
+    () => validateLicense('GR-KEY-3', { mode: 'live', provider: 'gumroad' }),
+    /requires --license-product-id/,
+  );
+});
