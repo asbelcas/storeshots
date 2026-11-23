@@ -1,6 +1,6 @@
 # storeshots
 
-![version](https://img.shields.io/badge/version-1.0.0-blue) ![tests](https://img.shields.io/badge/tests-55%2F55-brightgreen) ![license](https://img.shields.io/badge/license-FSL--1.1-green)
+![version](https://img.shields.io/badge/version-1.0.3-blue) ![tests](https://img.shields.io/badge/tests-59%2F59-brightgreen) ![license](https://img.shields.io/badge/license-FSL--1.1-green)
 
 **Test:** `npm install && npm test` — builds the TypeScript and runs the full suite (spec integrity, config parsing + error cases, per-template render dimensions, i18n overflow, license hook, end-to-end CLI integration). Must exit 0.
 
@@ -110,14 +110,16 @@ Three original layouts (device frames are drawn programmatically — no copied a
 
 ## License hook
 
-`src/license.ts` validates license keys. v1 ships with a `fake` mode (deterministic local checksum, for tests/CI only) and a `live` mode that is intentionally **not wired**: it throws until an endpoint is configured. No real validation happens in v1 builds; the CLI only checks a license if you pass `--license-key`.
+`src/license.ts` validates license keys. v1 ships with a `fake` mode (deterministic local checksum, for tests/CI only) and implemented `live` providers (Lemon Squeezy + Gumroad, since commit 50379c7): live mode calls the provider's verify endpoint and needs your seller details (`--license-endpoint`, or `--license-provider gumroad --license-product-id <id>`). Enforcement stays **off** by default until v1.1 per the sales copy; the CLI only checks a license if you pass `--license-key`.
 
 ## Handoff: what a human must do later
 
-1. Create the Lemon Squeezy (or Gumroad) seller account; wire the real license endpoint into `src/license.ts` live mode (`--license-endpoint`), and make the CLI enforce the key for paid builds.
-2. Update the copyright line in LICENSE and pick the public repo name/homepage before publishing.
-3. Re-verify the `android-tablet` size and Apple's current size list the week of release (SPEC-SIZES.md flags what to check).
-4. Record a demo GIF for the README; publish repo; list the product; run the distribution plan from the kill-or-commit memo.
+Status 2026-11-23 (README honesty pass):
+
+1. ~~Create the seller account / list the product~~ **DONE**: the Gumroad product is live ($29 one-time). Remaining: pass your Gumroad product id/permalink via `--license-product-id` when you want live validation, and flip enforcement on at v1.1.
+2. LICENSE copyright line is filled (Casey Armstrong, 2026); adding a `homepage` field to package.json is optional.
+3. Re-verify the `android-tablet` size and Apple's current size list the week of release (SPEC-SIZES.md flags what to check). Still open.
+4. ~~Record a demo GIF~~ (**done**, docs/demo.gif), ~~publish repo~~ (**done**, public), ~~list the product~~ (**done**, Gumroad). Remaining: run the distribution plan from the kill-or-commit memo.
 
 ## Roadmap
 
